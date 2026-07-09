@@ -715,7 +715,7 @@ unsafe impl<T: AtomicElement, const N: usize, const OVERWRITE: bool> Sync
 #[cfg(all(test, not(feature = "loom")))]
 mod tests {
     use super::*;
-    use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64};
+    use crate::shim::atomic::{AtomicBool, AtomicU32, AtomicU64};
 
     #[test]
     fn test_basic_push_pop() {

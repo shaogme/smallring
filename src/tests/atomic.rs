@@ -3,9 +3,9 @@
 //! 原子环形缓冲区的全面测试
 
 use crate::atomic::AtomicRingBuf;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::atomic::{AtomicI8, AtomicI16, AtomicI32, AtomicI64, AtomicIsize};
-use std::sync::atomic::{AtomicU8, AtomicU16, AtomicU32, AtomicU64, AtomicUsize};
+use crate::shim::atomic::{AtomicBool, Ordering};
+use crate::shim::atomic::{AtomicI8, AtomicI16, AtomicI32, AtomicI64, AtomicIsize};
+use crate::shim::atomic::{AtomicU8, AtomicU16, AtomicU32, AtomicU64, AtomicUsize};
 use std::sync::{Arc, Barrier};
 use std::thread;
 
