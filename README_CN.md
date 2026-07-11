@@ -19,6 +19,8 @@
 - **可配置覆盖** - Generic 模块支持编译期覆盖模式选择
 - **2的幂次容量** - 自动向上取整以实现高效的取模操作
 - **No_std 支持** - 支持 `no_std` 环境（需要 `alloc`）
+- **Portable Atomic 支持** - 可选集成 `portable-atomic`，在没有原生原子操作的平台上提供支持或使用替代原子类型
+- **Loom 集成** - 支持使用 Loom 进行并发测试
 
 ## 安装
 
@@ -28,6 +30,11 @@
 [dependencies]
 smallring = "0.2"
 ```
+
+### 特性功能 (Features)
+
+- `portable-atomic`：启用对 [portable-atomic](https://github.com/taiki-e/portable-atomic) 的支持。这为缺乏原生原子指令的平台提供了软件备用实现，并扩展了 `AtomicRingBuf` 以同时支持标准库 `core::sync::atomic::*` 和 `portable_atomic::*` 的原子类型。
+- `loom`：启用通过 [loom](https://github.com/tokio-rs/loom) 进行并发测试（通常仅在开发和测试中使用）。
 
 ## 快速开始
 
@@ -430,6 +437,8 @@ pub fn new<E: AtomicElement, const N: usize>(capacity: usize) -> AtomicRingBuf<E
 - `AtomicI8`、`AtomicI16`、`AtomicI32`、`AtomicI64`、`AtomicIsize`
 - `AtomicBool`
 
+*注：启用 `portable-atomic` 特性时，在支持原生原子的平台上，`AtomicRingBuf` 也直接支持标准库的 `core::sync::atomic::*` 类型。*
+
 ### SPSC 模块
 
 **创建环形缓冲区：**
@@ -520,12 +529,13 @@ pub fn new<T, const N: usize>(capacity: NonZero<usize>) -> (Producer<T, N>, Cons
 - **手动清理** - 不会在 drop 时自动清理。需要时请显式调用 `clear()`
 - **零成本抽象** - 覆盖行为在编译期选择，无运行时开销
 
-### Atomic 模块特性
+### Atomic Module特性
 
 - **原子操作** - 所有操作使用原子原语而不移动值
 - **内存顺序** - 每个操作接受 `Ordering` 参数以实现细粒度控制
 - **类型安全** - `AtomicElement` trait 确保仅支持有效的原子类型
 - **手动清理** - 不会在 drop 时自动清理。需要时请显式调用 `clear()`
+- **Portable Atomic 支持** - 当启用 `portable-atomic` 特性时，将使用 `portable_atomic` 类型，并同时为标准库的 `core::sync::atomic` 类型透明地实现相关 trait。
 
 ### SPSC 模块特性
 

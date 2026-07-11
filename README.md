@@ -19,6 +19,8 @@ A collection of high-performance lock-free ring buffer implementations with auto
 - **Configurable Overwrite** - Generic module supports compile-time overwrite mode selection
 - **Power-of-2 Capacity** - Automatic rounding for efficient modulo operations
 - **No_std Support** - Supports `no_std` environments (requires `alloc`)
+- **Portable Atomic Support** - Optional integration with `portable-atomic` for platforms lacking native atomic instructions
+- **Loom Integration** - Supports concurrency testing with Loom
 
 ## Installation
 
@@ -28,6 +30,11 @@ Add this to your `Cargo.toml`:
 [dependencies]
 smallring = "0.2"
 ```
+
+### Features
+
+- `portable-atomic`: Enables support for [portable-atomic](https://github.com/taiki-e/portable-atomic). This provides fallback atomic implementations on platforms without native atomic support and extends `AtomicRingBuf` to support both standard `core::sync::atomic::*` and `portable_atomic::*` types.
+- `loom`: Enables testing concurrency via [loom](https://github.com/tokio-rs/loom) (typically for dev/testing only).
 
 ## Quick Start
 
@@ -430,6 +437,8 @@ pub fn new<E: AtomicElement, const N: usize>(capacity: usize) -> AtomicRingBuf<E
 - `AtomicI8`, `AtomicI16`, `AtomicI32`, `AtomicI64`, `AtomicIsize`
 - `AtomicBool`
 
+*Note: When `portable-atomic` feature is enabled, `AtomicRingBuf` also supports standard `core::sync::atomic::*` types directly on platforms that support them.*
+
 ### SPSC Module
 
 **Creating a Ring Buffer:**
@@ -526,6 +535,7 @@ Capacity is automatically rounded up to the nearest power of 2:
 - **Memory ordering** - Each operation accepts `Ordering` parameter for fine-grained control
 - **Type safety** - `AtomicElement` trait ensures only valid atomic types are supported
 - **Manual cleanup** - Does NOT automatically clean up on drop. Call `clear()` explicitly if needed
+- **Portable Atomic Support** - When the `portable-atomic` feature is enabled, it uses `portable_atomic` types and transparently implements traits for standard `core::sync::atomic` types as well.
 
 ### SPSC Module Specifics
 
