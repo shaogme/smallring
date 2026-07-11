@@ -70,7 +70,7 @@ impl<T: AtomicElement, const N: usize> PushDispatch<T, N, true> for PushMarker<t
         // Check if we need to overwrite
         if write.wrapping_sub(read) >= ringbuf.core.capacity() {
             // Buffer was full - attempt to advance read index
-            ringbuf
+            let overwritten = ringbuf
                 .core
                 .read_idx()
                 .compare_exchange(
@@ -79,7 +79,7 @@ impl<T: AtomicElement, const N: usize> PushDispatch<T, N, true> for PushMarker<t
                     Ordering::Release,
                     Ordering::Relaxed,
                 )
-                .ok();
+                .is_ok();
 
             let index = write & ringbuf.core.mask();
             let old_value = unsafe {
@@ -94,7 +94,7 @@ impl<T: AtomicElement, const N: usize> PushDispatch<T, N, true> for PushMarker<t
                     ringbuf
                         .write_commit
                         .store(write.wrapping_add(1), Ordering::Release);
-                    return Some(old_value);
+                    return if overwritten { Some(old_value) } else { None };
                 }
                 backoff();
             }
