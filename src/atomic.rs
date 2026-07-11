@@ -96,6 +96,149 @@ impl_atomic_element!(AtomicI64, i64);
 impl_atomic_element!(AtomicIsize, isize);
 impl_atomic_element!(AtomicBool, bool);
 
+#[cfg(all(not(feature = "loom"), feature = "portable-atomic"))]
+macro_rules! impl_core_atomic_element {
+    ($atomic:ty, $primitive:ty) => {
+        impl AtomicElement for $atomic {
+            type Primitive = $primitive;
+
+            #[inline(always)]
+            fn load(&self, order: Ordering) -> Self::Primitive {
+                let core_order = match order {
+                    Ordering::Relaxed => core::sync::atomic::Ordering::Relaxed,
+                    Ordering::Release => core::sync::atomic::Ordering::Release,
+                    Ordering::Acquire => core::sync::atomic::Ordering::Acquire,
+                    Ordering::AcqRel => core::sync::atomic::Ordering::AcqRel,
+                    Ordering::SeqCst => core::sync::atomic::Ordering::SeqCst,
+                    _ => core::sync::atomic::Ordering::SeqCst,
+                };
+                self.load(core_order)
+            }
+
+            #[inline(always)]
+            fn store(&self, val: Self::Primitive, order: Ordering) {
+                let core_order = match order {
+                    Ordering::Relaxed => core::sync::atomic::Ordering::Relaxed,
+                    Ordering::Release => core::sync::atomic::Ordering::Release,
+                    Ordering::Acquire => core::sync::atomic::Ordering::Acquire,
+                    Ordering::AcqRel => core::sync::atomic::Ordering::AcqRel,
+                    Ordering::SeqCst => core::sync::atomic::Ordering::SeqCst,
+                    _ => core::sync::atomic::Ordering::SeqCst,
+                };
+                self.store(val, core_order);
+            }
+
+            #[inline(always)]
+            fn swap(&self, val: Self::Primitive, order: Ordering) -> Self::Primitive {
+                let core_order = match order {
+                    Ordering::Relaxed => core::sync::atomic::Ordering::Relaxed,
+                    Ordering::Release => core::sync::atomic::Ordering::Release,
+                    Ordering::Acquire => core::sync::atomic::Ordering::Acquire,
+                    Ordering::AcqRel => core::sync::atomic::Ordering::AcqRel,
+                    Ordering::SeqCst => core::sync::atomic::Ordering::SeqCst,
+                    _ => core::sync::atomic::Ordering::SeqCst,
+                };
+                self.swap(val, core_order)
+            }
+        }
+    };
+}
+
+#[cfg(all(not(feature = "loom"), feature = "portable-atomic"))]
+mod core_atomic_impls {
+    use super::*;
+
+    #[cfg(target_has_atomic = "8")]
+    impl_core_atomic_element!(core::sync::atomic::AtomicBool, bool);
+    #[cfg(target_has_atomic = "8")]
+    impl_core_atomic_element!(core::sync::atomic::AtomicU8, u8);
+    #[cfg(target_has_atomic = "8")]
+    impl_core_atomic_element!(core::sync::atomic::AtomicI8, i8);
+
+    #[cfg(target_has_atomic = "16")]
+    impl_core_atomic_element!(core::sync::atomic::AtomicU16, u16);
+    #[cfg(target_has_atomic = "16")]
+    impl_core_atomic_element!(core::sync::atomic::AtomicI16, i16);
+
+    #[cfg(target_has_atomic = "32")]
+    impl_core_atomic_element!(core::sync::atomic::AtomicU32, u32);
+    #[cfg(target_has_atomic = "32")]
+    impl_core_atomic_element!(core::sync::atomic::AtomicI32, i32);
+
+    #[cfg(target_has_atomic = "64")]
+    impl_core_atomic_element!(core::sync::atomic::AtomicU64, u64);
+    #[cfg(target_has_atomic = "64")]
+    impl_core_atomic_element!(core::sync::atomic::AtomicI64, i64);
+
+    #[cfg(target_has_atomic = "ptr")]
+    impl_core_atomic_element!(core::sync::atomic::AtomicUsize, usize);
+    #[cfg(target_has_atomic = "ptr")]
+    impl_core_atomic_element!(core::sync::atomic::AtomicIsize, isize);
+}
+
+#[cfg(all(not(feature = "loom"), feature = "portable-atomic"))]
+macro_rules! impl_core_atomic_numeric {
+    ($atomic:ty) => {
+        impl AtomicNumeric for $atomic {
+            #[inline]
+            fn fetch_add(&self, val: Self::Primitive, order: Ordering) -> Self::Primitive {
+                let core_order = match order {
+                    Ordering::Relaxed => core::sync::atomic::Ordering::Relaxed,
+                    Ordering::Release => core::sync::atomic::Ordering::Release,
+                    Ordering::Acquire => core::sync::atomic::Ordering::Acquire,
+                    Ordering::AcqRel => core::sync::atomic::Ordering::AcqRel,
+                    Ordering::SeqCst => core::sync::atomic::Ordering::SeqCst,
+                    _ => core::sync::atomic::Ordering::SeqCst,
+                };
+                self.fetch_add(val, core_order)
+            }
+
+            #[inline]
+            fn fetch_sub(&self, val: Self::Primitive, order: Ordering) -> Self::Primitive {
+                let core_order = match order {
+                    Ordering::Relaxed => core::sync::atomic::Ordering::Relaxed,
+                    Ordering::Release => core::sync::atomic::Ordering::Release,
+                    Ordering::Acquire => core::sync::atomic::Ordering::Acquire,
+                    Ordering::AcqRel => core::sync::atomic::Ordering::AcqRel,
+                    Ordering::SeqCst => core::sync::atomic::Ordering::SeqCst,
+                    _ => core::sync::atomic::Ordering::SeqCst,
+                };
+                self.fetch_sub(val, core_order)
+            }
+        }
+    };
+}
+
+#[cfg(all(not(feature = "loom"), feature = "portable-atomic"))]
+mod core_atomic_numeric_impls {
+    use super::*;
+
+    #[cfg(target_has_atomic = "8")]
+    impl_core_atomic_numeric!(core::sync::atomic::AtomicU8);
+    #[cfg(target_has_atomic = "8")]
+    impl_core_atomic_numeric!(core::sync::atomic::AtomicI8);
+
+    #[cfg(target_has_atomic = "16")]
+    impl_core_atomic_numeric!(core::sync::atomic::AtomicU16);
+    #[cfg(target_has_atomic = "16")]
+    impl_core_atomic_numeric!(core::sync::atomic::AtomicI16);
+
+    #[cfg(target_has_atomic = "32")]
+    impl_core_atomic_numeric!(core::sync::atomic::AtomicU32);
+    #[cfg(target_has_atomic = "32")]
+    impl_core_atomic_numeric!(core::sync::atomic::AtomicI32);
+
+    #[cfg(target_has_atomic = "64")]
+    impl_core_atomic_numeric!(core::sync::atomic::AtomicU64);
+    #[cfg(target_has_atomic = "64")]
+    impl_core_atomic_numeric!(core::sync::atomic::AtomicI64);
+
+    #[cfg(target_has_atomic = "ptr")]
+    impl_core_atomic_numeric!(core::sync::atomic::AtomicUsize);
+    #[cfg(target_has_atomic = "ptr")]
+    impl_core_atomic_numeric!(core::sync::atomic::AtomicIsize);
+}
+
 /// Internal trait to dispatch push behavior based on OVERWRITE
 ///
 /// 根据 OVERWRITE 分发 push 行为的内部 trait
