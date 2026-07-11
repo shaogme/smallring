@@ -15,6 +15,10 @@ rust-version = "1.87"
 
 [dependencies]
 loom = { version = "0.7.2", features = ["futures"], optional = true }
+portable-atomic = { version = "1.13.1", optional = true }
+portable-atomic-util = { version = "0.2.7", features = [
+    "alloc",
+], optional = true }
 
 [dev-dependencies]
 criterion = { version = "0.7.0", features = ["async_tokio"] }
@@ -23,6 +27,7 @@ rtrb = "0.3.2"
 [features]
 default = []
 loom = ["dep:loom"]
+portable-atomic = ["dep:portable-atomic", "dep:portable-atomic-util"]
 
 
 [[bench]]
