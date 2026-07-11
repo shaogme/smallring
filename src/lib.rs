@@ -138,4 +138,3 @@ mod doctests {
     #[doc = include_str!("../README_CN.md")]
     struct ReadmeCn;
 }
-

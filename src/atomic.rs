@@ -10,7 +10,7 @@
 //! 与通用环形缓冲区不同，原子环形缓冲区不移动值，而是通过原子 load/store 操作进行读写。
 
 use super::core::RingBufCore;
-use crate::shim::atomic::{Ordering, AtomicUsize};
+use crate::shim::atomic::{AtomicUsize, Ordering};
 use alloc::vec::Vec;
 use core::fmt;
 
@@ -26,7 +26,6 @@ fn backoff() {
 
 mod traits;
 pub use traits::{AtomicElement, AtomicNumeric};
-
 
 /// Internal trait to dispatch push behavior based on OVERWRITE
 ///
@@ -312,23 +311,35 @@ impl<T: AtomicElement, const N: usize, const OVERWRITE: bool> AtomicRingBuf<T, N
     /// 从缓冲区弹出一个值
     #[inline]
     pub fn pop(&self, order: Ordering) -> Option<T::Primitive> {
-        let read = self.core.read_idx().load(Ordering::Relaxed);
-        let commit = self.write_commit.load(Ordering::Acquire);
+        loop {
+            let read = self.core.read_idx().load(Ordering::Relaxed);
+            let commit = self.write_commit.load(Ordering::Acquire);
 
-        if read == commit {
-            return None;
+            if read == commit {
+                return None;
+            }
+
+            let index = read & self.core.mask();
+            let value = unsafe {
+                let slot = self.core.peek_at(index);
+                slot.load(order)
+            };
+
+            if self
+                .core
+                .read_idx()
+                .compare_exchange(
+                    read,
+                    read.wrapping_add(1),
+                    Ordering::Release,
+                    Ordering::Relaxed,
+                )
+                .is_ok()
+            {
+                return Some(value);
+            }
+            backoff();
         }
-
-        let index = read & self.core.mask();
-        let value = unsafe {
-            let slot = self.core.peek_at(index);
-            slot.load(order)
-        };
-
-        self.core
-            .read_idx()
-            .store(read.wrapping_add(1), Ordering::Release);
-        Some(value)
     }
 
     /// Peek at the next value without removing it
@@ -520,7 +531,6 @@ impl<'a, T: AtomicElement, const N: usize, const OVERWRITE: bool> ExactSizeItera
         self.remaining
     }
 }
-
 
 impl<T: AtomicElement + AtomicNumeric, const N: usize, const OVERWRITE: bool>
     AtomicRingBuf<T, N, OVERWRITE>
