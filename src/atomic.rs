@@ -312,7 +312,7 @@ impl<T: AtomicElement, const N: usize, const OVERWRITE: bool> AtomicRingBuf<T, N
     #[inline]
     pub fn pop(&self, order: Ordering) -> Option<T::Primitive> {
         loop {
-            let read = self.core.read_idx().load(Ordering::Relaxed);
+            let read = self.core.read_idx().load(Ordering::Acquire);
             let commit = self.write_commit.load(Ordering::Acquire);
 
             if read == commit {
@@ -331,7 +331,7 @@ impl<T: AtomicElement, const N: usize, const OVERWRITE: bool> AtomicRingBuf<T, N
                 .compare_exchange(
                     read,
                     read.wrapping_add(1),
-                    Ordering::Release,
+                    Ordering::AcqRel,
                     Ordering::Relaxed,
                 )
                 .is_ok()
