@@ -129,3 +129,13 @@ mod tests {
     pub mod atomic;
     pub mod generic;
 }
+
+#[cfg(doctest)]
+mod doctests {
+    #[doc = include_str!("../README.md")]
+    struct Readme;
+
+    #[doc = include_str!("../README_CN.md")]
+    struct ReadmeCn;
+}
+

@@ -37,7 +37,7 @@ smallring = "0.2"
 use smallring::generic::RingBuf;
 
 // Overwrite mode: automatically overwrites oldest data when full
-let buf: RingBuf<i32, 32, true> = RingBuf::new(4);
+let mut buf: RingBuf<i32, 32, true> = RingBuf::new(4);
 buf.push(1); // Returns None
 buf.push(2);
 buf.push(3);
@@ -45,7 +45,7 @@ buf.push(4);
 buf.push(5); // Returns Some(1), overwrote oldest
 
 // Non-overwrite mode: rejects writes when full
-let buf: RingBuf<i32, 32, false> = RingBuf::new(4);
+let mut buf: RingBuf<i32, 32, false> = RingBuf::new(4);
 buf.push(1).unwrap(); // Returns Ok(())
 buf.push(2).unwrap();
 buf.push(3).unwrap();
@@ -113,43 +113,13 @@ fn main() {
 }
 ```
 
-#### Shared Access with Multiple Threads
-
-```rust
-use smallring::generic::RingBuf;
-use std::sync::Arc;
-use std::thread;
-
-fn main() {
-    // Overwrite mode is thread-safe for concurrent writers
-    let buf = Arc::new(RingBuf::<u64, 128, true>::new(128));
-    let mut handles = vec![];
-    
-    // Multiple writer threads
-    for thread_id in 0..4 {
-        let buf_clone = Arc::clone(&buf);
-        let handle = thread::spawn(move || {
-            for i in 0..100 {
-                let value = (thread_id * 100 + i) as u64;
-                buf_clone.push(value); // Automatically overwrites old data
-            }
-        });
-        handles.push(handle);
-    }
-    
-    for handle in handles {
-        handle.join().unwrap();
-    }
-}
-```
-
 #### Error Handling
 
 ```rust
 use smallring::generic::{RingBuf, RingBufError};
 
 // Non-overwrite mode
-let buf: RingBuf<i32, 32, false> = RingBuf::new(4);
+let mut buf: RingBuf<i32, 32, false> = RingBuf::new(4);
 
 // Fill the buffer
 for i in 0..4 {
@@ -161,7 +131,7 @@ match buf.push(99) {
     Err(RingBufError::Full(value)) => {
         println!("Buffer full, couldn't push {}", value);
     }
-    Ok(_) => {}
+    _ => {}
 }
 
 // Empty the buffer
@@ -172,7 +142,7 @@ match buf.pop() {
     Err(RingBufError::Empty) => {
         println!("Buffer is empty");
     }
-    Ok(_) => {}
+    _ => {}
 }
 ```
 
@@ -416,7 +386,7 @@ let atomic_buf: AtomicRingBuf<AtomicU64, 64> = AtomicRingBuf::new(32);
 ### Generic Module
 
 **Creating a Ring Buffer:**
-```rust
+```rust,ignore
 pub fn new<T, const N: usize, const OVERWRITE: bool>(capacity: usize) -> RingBuf<T, N, OVERWRITE>
 ```
 
@@ -441,7 +411,7 @@ pub fn new<T, const N: usize, const OVERWRITE: bool>(capacity: usize) -> RingBuf
 ### Atomic Module
 
 **Creating a Ring Buffer:**
-```rust
+```rust,ignore
 pub fn new<E: AtomicElement, const N: usize>(capacity: usize) -> AtomicRingBuf<E, N>
 ```
 
@@ -463,7 +433,7 @@ pub fn new<E: AtomicElement, const N: usize>(capacity: usize) -> AtomicRingBuf<E
 ### SPSC Module
 
 **Creating a Ring Buffer:**
-```rust
+```rust,ignore
 pub fn new<T, const N: usize>(capacity: NonZero<usize>) -> (Producer<T, N>, Consumer<T, N>)
 ```
 

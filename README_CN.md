@@ -37,7 +37,7 @@ smallring = "0.2"
 use smallring::generic::RingBuf;
 
 // 覆盖模式：满时自动覆盖最旧的数据
-let buf: RingBuf<i32, 32, true> = RingBuf::new(4);
+let mut buf: RingBuf<i32, 32, true> = RingBuf::new(4);
 buf.push(1); // 返回 None
 buf.push(2);
 buf.push(3);
@@ -45,7 +45,7 @@ buf.push(4);
 buf.push(5); // 返回 Some(1)，覆盖了最旧的元素
 
 // 非覆盖模式：满时拒绝写入
-let buf: RingBuf<i32, 32, false> = RingBuf::new(4);
+let mut buf: RingBuf<i32, 32, false> = RingBuf::new(4);
 buf.push(1).unwrap(); // 返回 Ok(())
 buf.push(2).unwrap();
 buf.push(3).unwrap();
@@ -113,43 +113,13 @@ fn main() {
 }
 ```
 
-#### 多线程共享访问
-
-```rust
-use smallring::generic::RingBuf;
-use std::sync::Arc;
-use std::thread;
-
-fn main() {
-    // 覆盖模式对于并发写入者是线程安全的
-    let buf = Arc::new(RingBuf::<u64, 128, true>::new(128));
-    let mut handles = vec![];
-    
-    // 多个写入线程
-    for thread_id in 0..4 {
-        let buf_clone = Arc::clone(&buf);
-        let handle = thread::spawn(move || {
-            for i in 0..100 {
-                let value = (thread_id * 100 + i) as u64;
-                buf_clone.push(value); // 自动覆盖旧数据
-            }
-        });
-        handles.push(handle);
-    }
-    
-    for handle in handles {
-        handle.join().unwrap();
-    }
-}
-```
-
 #### 错误处理
 
 ```rust
 use smallring::generic::{RingBuf, RingBufError};
 
 // 非覆盖模式
-let buf: RingBuf<i32, 32, false> = RingBuf::new(4);
+let mut buf: RingBuf<i32, 32, false> = RingBuf::new(4);
 
 // 填满缓冲区
 for i in 0..4 {
@@ -161,7 +131,7 @@ match buf.push(99) {
     Err(RingBufError::Full(value)) => {
         println!("缓冲区已满，无法推送 {}", value);
     }
-    Ok(_) => {}
+    _ => {}
 }
 
 // 清空缓冲区
@@ -172,7 +142,7 @@ match buf.pop() {
     Err(RingBufError::Empty) => {
         println!("缓冲区为空");
     }
-    Ok(_) => {}
+    _ => {}
 }
 ```
 
@@ -416,7 +386,7 @@ let atomic_buf: AtomicRingBuf<AtomicU64, 64> = AtomicRingBuf::new(32);
 ### Generic 模块
 
 **创建环形缓冲区：**
-```rust
+```rust,ignore
 pub fn new<T, const N: usize, const OVERWRITE: bool>(capacity: usize) -> RingBuf<T, N, OVERWRITE>
 ```
 
@@ -441,7 +411,7 @@ pub fn new<T, const N: usize, const OVERWRITE: bool>(capacity: usize) -> RingBuf
 ### Atomic 模块
 
 **创建环形缓冲区：**
-```rust
+```rust,ignore
 pub fn new<E: AtomicElement, const N: usize>(capacity: usize) -> AtomicRingBuf<E, N>
 ```
 
@@ -463,7 +433,7 @@ pub fn new<E: AtomicElement, const N: usize>(capacity: usize) -> AtomicRingBuf<E
 ### SPSC 模块
 
 **创建环形缓冲区：**
-```rust
+```rust,ignore
 pub fn new<T, const N: usize>(capacity: NonZero<usize>) -> (Producer<T, N>, Consumer<T, N>)
 ```
 
