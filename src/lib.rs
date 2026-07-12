@@ -131,6 +131,7 @@ mod tests {
 }
 
 #[cfg(doctest)]
+#[cfg(not(feature = "loom"))]
 mod doctests {
     #[doc = include_str!("../README.md")]
     struct Readme;
