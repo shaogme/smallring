@@ -70,7 +70,7 @@ impl_atomic_element!(AtomicI64, i64);
 impl_atomic_element!(AtomicIsize, isize);
 impl_atomic_element!(AtomicBool, bool);
 
-#[cfg(all(not(feature = "loom"), feature = "portable-atomic"))]
+#[cfg(any(feature = "loom", feature = "portable-atomic"))]
 macro_rules! impl_core_atomic_element {
     ($atomic:ty, $primitive:ty) => {
         impl AtomicElement for $atomic {
@@ -118,7 +118,7 @@ macro_rules! impl_core_atomic_element {
     };
 }
 
-#[cfg(all(not(feature = "loom"), feature = "portable-atomic"))]
+#[cfg(any(feature = "loom", feature = "portable-atomic"))]
 mod core_atomic_impls {
     use super::*;
 
@@ -196,7 +196,7 @@ impl_atomic_numeric!(AtomicI32, i32);
 impl_atomic_numeric!(AtomicI64, i64);
 impl_atomic_numeric!(AtomicIsize, isize);
 
-#[cfg(all(not(feature = "loom"), feature = "portable-atomic"))]
+#[cfg(any(feature = "loom", feature = "portable-atomic"))]
 macro_rules! impl_core_atomic_numeric {
     ($atomic:ty) => {
         impl AtomicNumeric for $atomic {
@@ -229,7 +229,7 @@ macro_rules! impl_core_atomic_numeric {
     };
 }
 
-#[cfg(all(not(feature = "loom"), feature = "portable-atomic"))]
+#[cfg(any(feature = "loom", feature = "portable-atomic"))]
 mod core_atomic_numeric_impls {
     use super::*;
 
