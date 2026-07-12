@@ -7,9 +7,11 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
-    name: Cargo Hack Test
+  generate-matrix:
+    name: Generate Feature Matrix
     runs-on: ubuntu-latest
+    outputs:
+      features: ${{ steps.set-matrix.outputs.features }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@main
@@ -20,5 +22,31 @@ jobs:
       - name: Install cargo-hack
         uses: taiki-e/install-action@cargo-hack
 
-      - name: Run cargo hack test
-        run: cargo hack test --feature-powerset
+      - name: Generate feature combinations
+        id: set-matrix
+        run: |
+          # Get list of cargo test commands from cargo hack
+          COMMANDS=$(cargo hack test --feature-powerset --print-command-list)
+          
+          # Extract the arguments after "cargo test --manifest-path Cargo.toml " and format as JSON array
+          JSON=$(echo "$COMMANDS" | sed 's/cargo test --manifest-path Cargo.toml //g' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "features=$JSON" >> $GITHUB_OUTPUT
+
+  test:
+    name: Test (${{ matrix.features }})
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        features: ${{ fromJson(needs.generate-matrix.outputs.features) }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@main
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run cargo test
+        run: cargo test ${{ matrix.features }}
+
