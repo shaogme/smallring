@@ -10,10 +10,10 @@
 //! 与通用环形缓冲区不同，原子环形缓冲区不移动值，而是通过原子 load/store 操作进行读写。
 
 use super::core::RingBufCore;
+use super::vec::FixedVec;
 use crate::shim::atomic::{AtomicUsize, Ordering};
 use alloc::vec::Vec;
 use core::fmt;
-use super::vec::FixedVec;
 use core::mem::MaybeUninit;
 
 #[cfg(feature = "loom")]
@@ -92,13 +92,11 @@ impl<T: AtomicElement, const N: usize> PushDispatch<T, N, true> for PushMarker<t
         };
 
         // Mark as committed for this write index
-        ringbuf.get_commit_status(index).store(write, Ordering::Release);
+        ringbuf
+            .get_commit_status(index)
+            .store(write, Ordering::Release);
 
-        if overwritten {
-            Some(old_value)
-        } else {
-            None
-        }
+        if overwritten { Some(old_value) } else { None }
     }
 }
 
@@ -144,7 +142,9 @@ impl<T: AtomicElement, const N: usize> PushDispatch<T, N, false> for PushMarker<
                 }
 
                 // Mark as committed for this write index
-                ringbuf.get_commit_status(index).store(write, Ordering::Release);
+                ringbuf
+                    .get_commit_status(index)
+                    .store(write, Ordering::Release);
                 return Ok(());
             }
             backoff();
@@ -211,9 +211,7 @@ impl<T: AtomicElement, const N: usize, const OVERWRITE: bool> AtomicRingBuf<T, N
 
     #[inline]
     fn get_commit_status(&self, index: usize) -> &AtomicUsize {
-        unsafe {
-            self.commit_status[index].assume_init_ref()
-        }
+        unsafe { self.commit_status[index].assume_init_ref() }
     }
 
     /// Get capacity
