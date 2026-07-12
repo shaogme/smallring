@@ -50,6 +50,7 @@
 //! ## Usage Examples / 使用示例
 //!
 //! ```rust
+//! # #[cfg(not(feature = "loom"))] {
 //! use smallring::generic::RingBuf;
 //!
 //! // Generic ring buffer with overwrite mode
@@ -85,6 +86,7 @@
 //!     assert_eq!(consumer.pop().unwrap(), 1);
 //!     assert_eq!(consumer.pop().unwrap(), 2);
 //! });
+//! # }
 //! ```
 //!
 //! ## Performance / 性能
@@ -109,6 +111,7 @@
 //! 本库内部使用 unsafe 代码以提升性能，但提供完全安全的 API。
 //! 所有 unsafe 块都经过仔细文档化和正确性审查。
 #![cfg_attr(not(test), no_std)]
+#![cfg(not(all(doctest, feature = "loom")))]
 
 extern crate alloc;
 
@@ -131,7 +134,6 @@ mod tests {
 }
 
 #[cfg(doctest)]
-#[cfg(not(feature = "loom"))]
 mod doctests {
     #[doc = include_str!("../README.md")]
     struct Readme;
