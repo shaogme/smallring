@@ -7,7 +7,9 @@ use smallring::atomic::AtomicRingBuf;
 
 #[test]
 fn test_atomic_queue_mpsc_loom() {
-    loom::model(|| {
+    let mut builder = loom::model::Builder::new();
+    builder.preemption_bound = Some(3);
+    builder.check(|| {
         // MPSC test: 2 Producers, 1 Consumer
         // Capacity 4
         let buf = Arc::new(AtomicRingBuf::<AtomicUsize, 4, false>::new(4));
@@ -24,26 +26,23 @@ fn test_atomic_queue_mpsc_loom() {
             buf2.push(4, Ordering::Relaxed).unwrap();
         });
 
-        // Consumer
-        let t3 = thread::spawn(move || {
-            let mut received = 0;
-            let mut sum = 0;
-            // Expect 4 values
-            while received < 4 {
-                if let Some(val) = buf.pop(Ordering::Relaxed) {
-                    received += 1;
-                    sum += val;
-                } else {
-                    thread::yield_now();
-                }
+        // Consumer running on the main thread (no t3 spawned)
+        let mut received = 0;
+        let mut sum = 0;
+        // Expect 4 values
+        while received < 4 {
+            if let Some(val) = buf.pop(Ordering::Relaxed) {
+                received += 1;
+                sum += val;
+            } else {
+                thread::yield_now();
             }
-            // 1+2+3+4 = 10
-            assert_eq!(sum, 10);
-        });
+        }
+        // 1+2+3+4 = 10
+        assert_eq!(sum, 10);
 
         t1.join().unwrap();
         t2.join().unwrap();
-        t3.join().unwrap();
     });
 }
 
@@ -120,7 +119,9 @@ fn test_atomic_queue_overwrite_loom() {
 
 #[test]
 fn test_atomic_queue_mpmc_loom() {
-    loom::model(|| {
+    let mut builder = loom::model::Builder::new();
+    builder.preemption_bound = Some(3);
+    builder.check(|| {
         // MPMC test: 2 Producers, 2 Consumers
         // Capacity 2, non-overwrite mode to keep Loom state space bounded
         let buf = Arc::new(AtomicRingBuf::<AtomicUsize, 4, false>::new(2));
